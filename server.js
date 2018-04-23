@@ -427,7 +427,7 @@ app.get('/getAverageGPA/:course_department/:course_number/:professor', function 
 	console.log(sql_query);
 	connection.query(sql_query,function (error, result,fields) {
 		if(error) {
-			var err_message = "Error: getNextSemProfessors/" + course_department + course_number;
+			var err_message = "Error: getAverageGPA/" + course_department + course_number;
 			res.status(403).send(err_message);
 		} else if(result.length == 0) {
 			var err_message = "Error: No records found for past section of this course.";
@@ -441,27 +441,24 @@ app.get('/getAverageGPA/:course_department/:course_number/:professor', function 
 });
 
 
-// 10. Get all professors, their GPA and RMP link for a course
+// 10. Get courses and professors for a minimum threshold gpa.
 app.get('/getMinGPACourses/:course_department/:minGPA', function (req, res) {
 	var course_department = req.params.course_department;
 	var minGPA = req.params.minGPA;
 
-	var sql_select = "select Professor.name_format1, AVG(CourseHistory.gpa) as avg, RMPProfile.rmp_link ";
-	var sql_from = "FROM CourseHistory, Professor, RMPProfile ";
+	var sql_select = "select Professor.name_format1, CourseHistory2.gpa as avg, RMPProfile.rmp_link, CourseHistory2.course_department, CourseHistory2.course_number ";
+	var sql_from = "FROM CourseHistory2, Professor, RMPProfile ";
 
-	var sql_where = "WHERE CourseHistory.course_department = '"+course_department+"'";
-	var sql_where2 = " AND CourseHistory.professor_name_format2 = Professor.name_format2";
+	var sql_where = "WHERE CourseHistory2.course_department = '"+course_department+"'";
+	var sql_where2 = " AND CourseHistory2.professor_name_format2 = Professor.name_format2";
 	var sql_where3 = " AND RMPProfile.professor_name_format1 = Professor.name_format1 ";
-
-	var sql_groupby = "GROUP BY CourseHistory.professor_name_format2 ";
-	var sql_having = "HAVING AVG(CourseHistory.gpa) >= "+minGPA;
-
-	var sql_query = sql_select + sql_from + sql_where + sql_where2 + sql_where3 + sql_groupby + sql_having;
+	var sql_having = "HAVING CourseHistory2.gpa >= "+minGPA;
+	var sql_query = sql_select + sql_from + sql_where + sql_where2 + sql_where3 + sql_having;
 
 	console.log(sql_query);
 	connection.query(sql_query,function (error, result,fields){
 		if(error) {
-			var err_message = "Error: getMinGPAProfessors/" + course_department + course_number;
+			var err_message = "Error: getMinGPACourses/" + course_department;
 			res.status(403).send(err_message);
 		}
 		else {
@@ -485,7 +482,8 @@ io.on('connection', function(socket){
 	})
 })
 
-app.listen(port, function(){
+http.listen(port, function(){
   	console.log('Server running on port ' + port);
 })
+
 
